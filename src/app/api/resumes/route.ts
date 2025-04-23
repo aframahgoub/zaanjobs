@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
       views: 0,
       contacts: 0,
-      slug: string,
+      slug: "",
     };
 
     console.log("Resume data to be inserted:", {
