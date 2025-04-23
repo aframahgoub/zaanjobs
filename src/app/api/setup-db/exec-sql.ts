@@ -31,11 +31,8 @@ export async function executeSQL(sql: string) {
         sql.trim().toUpperCase().startsWith("CREATE EXTENSION")
       ) {
         try {
-          // For CREATE TABLE statements, we'll try to create it directly
-          // This might fail if the table already exists, which is fine
-          await supabase.rpc("exec_sql", { sql }).catch(() => {
-            // Ignore errors here, we'll try other methods
-          });
+          // Try executing the SQL
+          await supabase.rpc("exec_sql", { sql });
 
           // For CREATE TABLE specifically, check if we can query the table
           if (
@@ -44,25 +41,29 @@ export async function executeSQL(sql: string) {
               .toUpperCase()
               .includes("CREATE TABLE IF NOT EXISTS PUBLIC.RESUMES")
           ) {
-            // Try to query the resumes table to see if it exists
-            const { data: checkData, error: checkError } = await supabase
-              .from("resumes")
-              .select("count")
-              .limit(1);
+            try {
+              const { data: checkData, error: checkError } = await supabase
+                .from("resumes")
+                .select("count")
+                .limit(1);
 
-            if (!checkError) {
-              console.log("Table exists and is accessible");
-              return { success: true };
+              if (!checkError) {
+                console.log("Table exists and is accessible");
+                return { success: true };
+              }
+            } catch (innerQueryError) {
+              console.log("Failed to query resumes table:", innerQueryError);
             }
           }
         } catch (directQueryError) {
           console.log(
             "Direct table creation attempt failed, continuing with other methods",
+            directQueryError,
           );
         }
       }
     } catch (directError) {
-      console.log("Direct query failed, falling back to REST API");
+      console.log("Direct query failed, falling back to REST API", directError);
     }
 
     // Last resort: try the REST API
