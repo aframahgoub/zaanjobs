@@ -19,19 +19,24 @@ export async function GET(request: NextRequest) {
       .select("*");
 
     // Get auth users
-    const { data: authUsers, error: authUsersError } = await supabase
-      .rpc("exec_sql", {
+    let authUsers = null;
+    let authUsersError = null;
+
+    try {
+      const { data, error } = await supabase.rpc("exec_sql", {
         sql: `
-          SELECT * FROM auth.users LIMIT 10;
-        `,
-      })
-      .catch(() => ({
-        data: null,
-        error: {
-          message:
-            "Cannot access auth.users or exec_sql function not available",
-        },
-      }));
+      SELECT * FROM auth.users LIMIT 10;
+    `,
+      });
+
+      authUsers = data;
+      authUsersError = error;
+    } catch {
+      authUsers = null;
+      authUsersError = {
+        message: "Cannot access auth.users or exec_sql function not available",
+      };
+    }
 
     // Check RLS status
     const { data: rlsStatus, error: rlsError } = await supabase
