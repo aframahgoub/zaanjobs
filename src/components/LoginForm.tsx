@@ -1,0 +1,138 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { X } from "lucide-react";
+import { signInWithEmail, ensureUserProfile } from "@/lib/auth";
+import { useRouter } from "next/navigation";
+import { useLanguage } from "@/contexts/LanguageContext";
+interface LoginFormProps {
+  onClose: () => void;
+}
+
+export default function LoginForm({ onClose }: LoginFormProps) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+  const { t } = useLanguage();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Use the auth helper function to sign in
+      const { user, session } = await signInWithEmail(email, password);
+
+      if (!user || !session) {
+        throw new Error("Login failed. Please check your credentials.");
+      }
+
+      console.log("User authenticated successfully:", user.id);
+
+      // Ensure the user profile exists in the database
+      const profileCreated = await ensureUserProfile(
+        user.id,
+        user.email || email,
+      );
+      if (!profileCreated) {
+        console.warn(
+          "Could not verify user profile, but continuing with login",
+        );
+      }
+
+      // Store session info in localStorage for immediate feedback
+      localStorage.setItem(
+        "authUser",
+        JSON.stringify({
+          id: user.id,
+          email: user.email,
+          lastLogin: new Date().toISOString(),
+        }),
+      );
+
+      // Redirect to dashboard
+      window.location.href = "/dashboard";
+      onClose();
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(
+        err.message || "Failed to login. Please check your credentials.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-8 max-w-md w-full relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4"
+          onClick={onClose}
+        >
+          <X size={20} />
+        </Button>
+
+        <h2 className="text-2xl font-bold text-[#18515b] mb-6">
+          {t("auth.login")}
+        </h2>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-gray-700 mb-2">
+              {t("auth.email")}
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00acc1]"
+              required
+            />
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="password" className="block text-gray-700 mb-2">
+              {t("auth.password")}
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00acc1]"
+              required
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-[#00acc1] text-white hover:bg-[#18515b]"
+            disabled={isLoading}
+          >
+            {isLoading ? t("auth.loggingIn") : t("auth.login")}
+          </Button>
+
+          <div className="mt-4 text-center text-sm text-gray-600">
+            <a href="#" className="text-[#00acc1] hover:underline">
+              {t("auth.resetPassword")}
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,109 @@
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(request: NextRequest) {
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+
+  try {
+    // Check authentication
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    // Get all users from the users table
+    const { data: users, error: usersError } = await supabase
+      .from("users")
+      .select("*");
+
+    // Get auth users
+    const { data: authUsers, error: authUsersError } = await supabase
+      .rpc("exec_sql", {
+        sql: `
+          SELECT * FROM auth.users LIMIT 10;
+        `,
+      })
+      .catch(() => ({
+        data: null,
+        error: {
+          message:
+            "Cannot access auth.users or exec_sql function not available",
+        },
+      }));
+
+    // Check RLS status
+    const { data: rlsStatus, error: rlsError } = await supabase
+      .rpc("exec_sql", {
+        sql: `
+          SELECT relname, relrowsecurity
+          FROM pg_class
+          WHERE relname = 'users';
+        `,
+      })
+      .catch(() => ({
+        data: null,
+        error: {
+          message: "Cannot check RLS status or exec_sql function not available",
+        },
+      }));
+
+    // Check policies
+    const { data: policies, error: policiesError } = await supabase
+      .rpc("exec_sql", {
+        sql: `
+          SELECT * FROM pg_policies WHERE tablename = 'users';
+        `,
+      })
+      .catch(() => ({
+        data: null,
+        error: {
+          message: "Cannot check policies or exec_sql function not available",
+        },
+      }));
+
+    return NextResponse.json({
+      auth: {
+        isLoggedIn: !!session,
+        userId: session?.user?.id,
+        session: session
+          ? { id: session.user.id, email: session.user.email }
+          : null,
+      },
+      database: {
+        users: {
+          success: !usersError,
+          count: users?.length || 0,
+          data: users,
+          error: usersError,
+        },
+        authUsers: {
+          success: !authUsersError,
+          data: authUsers,
+          error: authUsersError,
+        },
+        rlsStatus: {
+          success: !rlsError,
+          data: rlsStatus,
+          error: rlsError,
+        },
+        policies: {
+          success: !policiesError,
+          data: policies,
+          error: policiesError,
+        },
+      },
+      supabaseConfig: {
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL ? "Set" : "Not set",
+        anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Set" : "Not set",
+      },
+    });
+  } catch (error: any) {
+    console.error("Debug users endpoint error:", error);
+    return NextResponse.json(
+      { error: error.message || "Server error" },
+      { status: 500 },
+    );
+  }
+}
