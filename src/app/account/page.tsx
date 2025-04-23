@@ -68,8 +68,7 @@ export default function AccountPage() {
     loadUserData();
   }, [router]);
 
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
+  const handleProfileUpdate = async () => {
     setIsLoading(true);
     setError("");
     setSuccess("");
