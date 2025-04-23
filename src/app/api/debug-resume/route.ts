@@ -30,20 +30,27 @@ export async function GET(request: NextRequest) {
       .select("count")
       .limit(1);
 
-    // Get table info
-    const { data: tableInfo, error: tableError } = await supabase
-      .rpc("exec_sql", {
-        sql: `
-          SELECT column_name, data_type 
-          FROM information_schema.columns 
-          WHERE table_schema = 'public' AND table_name = 'resumes'
-          ORDER BY ordinal_position;
-        `,
-      })
-      .catch(() => ({
-        data: null,
-        error: { message: " function not available" },
-      }));
+    let tableInfo = null;
+    let tableError = null;
+
+    await (async () => {
+      try {
+        const { data, error } = await supabase.rpc("exec_sql", {
+          sql: `
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'resumes'
+        ORDER BY ordinal_position;
+      `,
+        });
+
+        tableInfo = data;
+        tableError = error;
+      } catch {
+        tableInfo = null;
+        tableError = { message: "exec_sql function not available" };
+      }
+    })();
 
     // Try to create a test resume
     let testInsertResult = null;
