@@ -57,7 +57,7 @@ export default function AccountPage() {
             userType: data.user_type || "professional",
           });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error loading user data:", err);
         setError("Failed to load user data. Please try again.");
       } finally {
@@ -95,7 +95,7 @@ export default function AccountPage() {
       }
 
       setSuccess("Profile updated successfully!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating profile:", err);
       setError(err.message || "Failed to update profile. Please try again.");
     } finally {
@@ -103,7 +103,7 @@ export default function AccountPage() {
     }
   };
 
-  const handlePasswordChange = async (e) => {
+  const handlePasswordChange = async (e: any) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -135,9 +135,11 @@ export default function AccountPage() {
       });
 
       setSuccess(t("account.passwordUpdated"));
-    } catch (err) {
-      console.error("Error changing password:", err);
-      setError(err.message || "Failed to change password. Please try again.");
+    } catch (err: any) {
+      if (error) {
+        console.error("Error changing password:", err);
+        setError("Failed to change password. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

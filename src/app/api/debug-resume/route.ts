@@ -29,22 +29,55 @@ export async function GET(request: NextRequest) {
       .from("resumes")
       .select("count")
       .limit(1);
+    let tableInfo = null;
+    let tableError = null;
 
-    // Get table info
-    const { data: tableInfo, error: tableError } = await supabase
-      .rpc("exec_sql", {
+    try {
+      const { data, error } = await supabase.rpc("exec_sql", {
         sql: `
-          SELECT column_name, data_type 
-          FROM information_schema.columns 
-          WHERE table_schema = 'public' AND table_name = 'resumes'
-          ORDER BY ordinal_position;
-        `,
-      })
-      .catch(() => ({
-        data: null,
-        error: { message: "exec_sql function not available" },
-      }));
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_schema = 'public' AND table_name = 'resumes'
+      ORDER BY ordinal_position;
+    `,
+      });
 
+      tableInfo = data;
+      tableError = error;
+
+      if (tableError) {
+        throw tableError;
+      }
+    } catch (err) {
+      console.error("exec_sql error:", err);
+      tableError = { message: "exec_sql function not available" };
+      tableInfo = null;
+    }
+    // Get table info
+    let tableInfo = null;
+    let tableError = null;
+
+    try {
+      const { data, error } = await supabase.rpc("exec_sql", {
+        sql: `
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_schema = 'public' AND table_name = 'resumes'
+      ORDER BY ordinal_position;
+    `,
+      });
+
+      tableInfo = data;
+      tableError = error;
+
+      if (tableError) {
+        throw tableError;
+      }
+    } catch (err) {
+      console.error("exec_sql error:", err);
+      tableError = { message: "exec_sql function not available" };
+      tableInfo = null;
+    }
     // Try to create a test resume
     let testInsertResult = null;
     if (isLoggedIn) {
