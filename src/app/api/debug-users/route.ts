@@ -39,34 +39,46 @@ export async function GET(request: NextRequest) {
     }
 
     // Check RLS status
-    const { data: rlsStatus, error: rlsError } = await supabase
-      .rpc("exec_sql", {
+    let rlsStatus = null;
+    let rlsError = null;
+
+    try {
+      const { data, error } = await supabase.rpc("exec_sql", {
         sql: `
-          SELECT relname, relrowsecurity
-          FROM pg_class
-          WHERE relname = 'users';
-        `,
-      })
-      .catch(() => ({
-        data: null,
-        error: {
-          message: "Cannot check RLS status or exec_sql function not available",
-        },
-      }));
+      SELECT relname, relrowsecurity
+      FROM pg_class
+      WHERE relname = 'users';
+    `,
+      });
+
+      rlsStatus = data;
+      rlsError = error;
+    } catch {
+      rlsStatus = null;
+      rlsError = {
+        message: "Cannot check RLS status or exec_sql function not available",
+      };
+    }
 
     // Check policies
-    const { data: policies, error: policiesError } = await supabase
-      .rpc("exec_sql", {
+    let policies = null;
+    let policiesError = null;
+
+    try {
+      const { data, error } = await supabase.rpc("exec_sql", {
         sql: `
-          SELECT * FROM pg_policies WHERE tablename = 'users';
-        `,
-      })
-      .catch(() => ({
-        data: null,
-        error: {
-          message: "Cannot check policies or exec_sql function not available",
-        },
-      }));
+      SELECT * FROM pg_policies WHERE tablename = 'users';
+    `,
+      });
+
+      policies = data;
+      policiesError = error;
+    } catch {
+      policies = null;
+      policiesError = {
+        message: "Cannot check policies or exec_sql function not available",
+      };
+    }
 
     return NextResponse.json({
       auth: {
