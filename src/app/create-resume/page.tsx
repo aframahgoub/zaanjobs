@@ -85,7 +85,7 @@ export default function CreateResumePage() {
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [resumeId, setResumeId] = useState<string>("");
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<typeof formData>({
     firstname: "",
     lastname: "",
     title: "",
