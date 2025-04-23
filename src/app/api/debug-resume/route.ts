@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       })
       .catch(() => ({
         data: null,
-        error: { message: "exec_sql function not available" },
+        error: { message: " function not available" },
       }));
 
     // Try to create a test resume
