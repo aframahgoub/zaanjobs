@@ -69,11 +69,8 @@ export default function CreateResumePage() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string>("");
   const [portfolioImages, setPortfolioImages] = useState<File[]>([]);
-  const [portfolioImagePreviews, setPortfolioImagePreviews] = useState<
-    string[]
-  >([]);
-  const [attachments, setAttachments] =
-    useState < Array<{ name: string; url: string }>([]);
+  const [portfolioImagePreviews, setPortfolioImagePreviews] = useState<string[]>([]);
+  const [attachments, setAttachments] =useState<Array<{ name: string, url: string }>([]);
   const [newAttachment, setNewAttachment] = useState({ name: "", url: "" });
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
