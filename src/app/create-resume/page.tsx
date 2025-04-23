@@ -72,12 +72,8 @@ export default function CreateResumePage() {
   const [portfolioImagePreviews, setPortfolioImagePreviews] = useState<
     string[]
   >([]);
-  const [attachments, setAttachments] = useState<
-    Array<{
-      name: string;
-      url: string;
-    }>
-  >([]);
+  const [attachments, setAttachments] =
+    useState < Array<{ name: string; url: string }>([]);
   const [newAttachment, setNewAttachment] = useState({ name: "", url: "" });
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +81,7 @@ export default function CreateResumePage() {
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [resumeId, setResumeId] = useState<string>("");
 
-  const [formData, setFormData] = useState<typeof formData>({
+  const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
     title: "",
@@ -112,10 +108,7 @@ export default function CreateResumePage() {
   const [education, setEducation] = useState<Array<any>>([]);
 
   const [certifications, setCertifications] = useState<
-    Array<{
-      name: string;
-      year: string;
-    }>
+    Array<{ name: string; year: string }>
   >([{ name: "", year: "" }]);
 
   const [experience, setExperience] = useState<
